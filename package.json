@@ -1,0 +1,53 @@
+{
+  "name": "super-car-rental",
+  "version": "1.0.0",
+  "description": "Luxury supercar rental platform ready for Vercel deployment",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "db:setup": "npm run prisma:generate && npm run prisma:push && npm run prisma:seed",
+    "postinstall": "prisma generate"
+  },
+  "keywords": [
+    "nextjs",
+    "stripe",
+    "prisma",
+    "supercar-rental"
+  ],
+  "author": "Super Car Rental",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "@vercel/blob": "^2.4.0",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.3.0",
+    "lucide-react": "^1.16.0",
+    "next": "^16.2.6",
+    "prisma": "^6.19.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "resend": "^6.12.3",
+    "stripe": "^22.1.1",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.5.0",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.6",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^4.3.0",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3",
+    "vercel": "^54.4.1"
+  }
+}

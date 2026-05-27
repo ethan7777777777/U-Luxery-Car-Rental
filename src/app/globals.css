@@ -1,0 +1,280 @@
+:root {
+  color-scheme: dark;
+  --background: #080808;
+  --surface: #111111;
+  --surface-2: #151515;
+  --border: #2a2a2a;
+  --text: #f5f5f5;
+  --muted: #a5a5a5;
+  --accent: #d4af37;
+  --accent-strong: #f0cc53;
+  --danger: #ff4f4f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: radial-gradient(circle at top right, #1a1a1a 0%, var(--background) 45%);
+  color: var(--text);
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.container {
+  width: min(1200px, 92vw);
+  margin: 0 auto;
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8, 8, 8, 0.88);
+  backdrop-filter: blur(12px);
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 70px;
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--accent-strong);
+}
+
+.nav-links {
+  display: flex;
+  gap: 1rem;
+  color: var(--muted);
+}
+
+.hero {
+  padding: 3rem 0 2rem;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(1.9rem, 3.8vw, 2.6rem);
+}
+
+.hero p {
+  margin-top: 0.8rem;
+  color: var(--muted);
+  max-width: 720px;
+}
+
+.car-grid {
+  display: grid;
+  gap: 1.2rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  padding-bottom: 3rem;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #141414, #0e0e0e);
+  overflow: hidden;
+}
+
+.car-image {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  display: block;
+}
+
+.card-content {
+  padding: 1rem;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.card-subtitle {
+  margin: 0.3rem 0 0.9rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.price-row strong {
+  color: var(--accent-strong);
+}
+
+.btn,
+button,
+input[type="submit"] {
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #111;
+  font-weight: 700;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn:hover,
+button:hover,
+input[type="submit"]:hover {
+  background: var(--accent-strong);
+}
+
+.btn-secondary {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--text);
+}
+
+.btn-secondary:hover {
+  border-color: var(--text);
+  background: #1b1b1b;
+}
+
+.grid-two {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 1.2rem;
+  margin-top: 1.4rem;
+}
+
+.gallery-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gallery-grid img:first-child {
+  grid-column: 1 / -1;
+  aspect-ratio: 16 / 8;
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+label {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 0.65rem 0.7rem;
+  font: inherit;
+}
+
+input[type="checkbox"] {
+  width: auto;
+}
+
+.field-row {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.status {
+  border-radius: 6px;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.86rem;
+}
+
+.status.error {
+  background: rgba(255, 79, 79, 0.14);
+  border: 1px solid rgba(255, 79, 79, 0.5);
+  color: #ffc8c8;
+}
+
+.status.ok {
+  background: rgba(80, 224, 141, 0.14);
+  border: 1px solid rgba(80, 224, 141, 0.5);
+  color: #cbffd3;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.8rem;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  padding: 0.7rem 0.4rem;
+  font-size: 0.9rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+@media (max-width: 960px) {
+  .grid-two {
+    grid-template-columns: 1fr;
+  }
+
+  .site-header__inner {
+    min-height: 62px;
+  }
+}
+
+@media (max-width: 640px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-links {
+    gap: 0.5rem;
+    font-size: 0.9rem;
+  }
+}
