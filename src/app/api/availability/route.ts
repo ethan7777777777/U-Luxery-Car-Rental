@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { checkCarAvailability } from "@/lib/availability";
-import { hasDatabaseUrl } from "@/lib/config";
+import { hasSupabaseConfig } from "@/lib/config";
+import { getSupabaseAdmin } from "@/lib/supabase";
+import { overlap } from "@/lib/utils";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -20,7 +21,7 @@ export async function GET(request: Request) {
     );
   }
 
-  if (!hasDatabaseUrl) {
+  if (!hasSupabaseConfig) {
     return NextResponse.json({
       available: false,
       reason: "Booking is currently unavailable while database setup is pending.",
@@ -37,7 +38,28 @@ export async function GET(request: Request) {
     );
   }
 
-  const availability = await checkCarAvailability(carId, parsedStartDate, parsedEndDate);
+  const supabase = getSupabaseAdmin();
+  const { data: blockedDates } = await supabase
+    .from("blocked_dates")
+    .select("id, blocked_from, blocked_to, reason")
+    .eq("vehicle_id", carId);
+
+  const conflict = (blockedDates || []).find((blockedDate) =>
+    overlap(
+      parsedStartDate,
+      parsedEndDate,
+      new Date(blockedDate.blocked_from),
+      new Date(blockedDate.blocked_to),
+    ),
+  );
+
+  const availability = conflict
+    ? {
+        available: false,
+        reason: conflict.reason || "Selected dates are blocked for this vehicle.",
+      }
+    : { available: true, reason: null };
+
   return NextResponse.json({
     available: availability.available,
     reason: availability.reason,

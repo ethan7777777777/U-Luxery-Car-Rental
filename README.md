@@ -1,6 +1,6 @@
-# Blackline Exotics - Supercar Rental Platform
+# Aurelius Executive - Ultra Luxury Executive Rental Platform
 
-Production-ready luxury supercar rental website built with Next.js, Prisma/Postgres, Stripe checkout, Vercel Blob license uploads, and an admin dashboard.
+Production-ready ultra luxury executive rental website focused on Rolls-Royce tier demand testing, built with Next.js, Prisma/Postgres, Stripe checkout, Vercel Blob license uploads, and an admin dashboard.
 
 ## Stack
 
@@ -12,7 +12,7 @@ Production-ready luxury supercar rental website built with Next.js, Prisma/Postg
 
 ## Features
 
-- Homepage listing all available supercars
+- Homepage listing all available Rolls-Royce pricing tiers
 - Individual car pages with:
   - Image gallery
   - Price per day
@@ -31,6 +31,7 @@ Production-ready luxury supercar rental website built with Next.js, Prisma/Postg
   - Add/edit/remove cars
   - Block/unblock unavailable dates
   - View customer/payment/license data
+  - Compare booking demand and revenue performance by vehicle tier
 - Optional admin booking email notifications
 
 ## Local Setup

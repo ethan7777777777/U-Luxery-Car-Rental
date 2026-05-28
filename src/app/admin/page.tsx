@@ -1,65 +1,95 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import {
   adminLogoutAction,
   createBlockedDateAction,
-  createOrUpdateCarAction,
-  markBookingPaidAction,
+  createOrUpdateVehicleAction,
   removeBlockedDateAction,
-  removeCarAction,
-  updateBookingStatusAction,
+  removeVehicleAction,
+  updateBookingRequestStatusAction,
 } from "@/app/admin/actions";
 import { isAdminAuthenticated } from "@/lib/auth";
-import { hasDatabaseUrl } from "@/lib/config";
-import { prisma } from "@/lib/prisma";
+import { hasSupabaseConfig } from "@/lib/config";
+import { getTierMeta } from "@/lib/tier";
 import { formatCurrency } from "@/lib/utils";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  const authenticated = await isAdminAuthenticated();
-  if (!authenticated) {
-    redirect("/admin/login");
-  }
+  if (!(await isAdminAuthenticated())) redirect("/admin/login");
 
-  if (!hasDatabaseUrl) {
+  if (!hasSupabaseConfig) {
     return (
       <div className="container" style={{ padding: "1.5rem 0 3rem" }}>
         <section className="panel">
-          <h1>Admin Dashboard</h1>
-          <div className="status error">
-            Database is not configured. Set `DATABASE_URL` in Vercel or `.env.local`
-            to enable admin features.
-          </div>
+          <h1>Executive Rental Admin</h1>
+          <div className="status error">Supabase env variables are not configured.</div>
         </section>
       </div>
     );
   }
 
-  const [bookings, cars, blockedDates] = await Promise.all([
-    prisma.booking.findMany({
-      include: { car: true },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.car.findMany({
-      include: {
-        images: {
-          orderBy: { sortOrder: "asc" },
-        },
-      },
-      orderBy: { createdAt: "asc" },
-    }),
-    prisma.blockedDate.findMany({
-      include: { car: true },
-      orderBy: { startDate: "asc" },
-    }),
-  ]);
+  const supabase = getSupabaseAdmin();
+  const [{ data: vehiclesRaw }, { data: bookingsRaw }, { data: blockedDatesRaw }] =
+    await Promise.all([
+    supabase.from("vehicles").select("*").order("price_per_day", { ascending: true }),
+    supabase
+      .from("bookings")
+      .select("*, vehicles(name)")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("blocked_dates")
+      .select("*, vehicles(name)")
+      .order("blocked_from", { ascending: true }),
+    ]);
+
+  const vehicles = (vehiclesRaw || []) as {
+    id: string;
+    name: string;
+    slug: string;
+    year: number;
+    price_per_day: number;
+    is_active: boolean;
+  }[];
+  const bookings = (bookingsRaw || []) as {
+    id: string;
+    vehicle_id: string;
+    customer_name: string | null;
+    email: string;
+    start_date: string;
+    end_date: string;
+    created_at: string;
+    booking_status: string;
+    vehicles?: { name?: string } | null;
+  }[];
+  const blockedDates = (blockedDatesRaw || []) as {
+    id: string;
+    blocked_from: string;
+    blocked_to: string;
+    reason: string | null;
+    vehicles?: { name?: string } | null;
+  }[];
+
+  const rows = (vehicles || []).map((vehicle) => {
+    const vehicleBookings = bookings.filter((booking) => booking.vehicle_id === vehicle.id);
+    return {
+      id: vehicle.id,
+      name: vehicle.name,
+      tier: getTierMeta({
+        slug: vehicle.slug,
+        year: vehicle.year,
+        dailyPrice: vehicle.price_per_day,
+      }).label,
+      total: vehicleBookings.length,
+      pending: vehicleBookings.filter((booking) => booking.booking_status === "PENDING").length,
+    };
+  });
 
   return (
     <div className="container" style={{ padding: "1.2rem 0 3rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: "0.8rem" }}>
-        <h1>Admin Dashboard</h1>
+        <h1>Executive Rental Admin</h1>
         <form action={adminLogoutAction}>
           <button className="btn-secondary" type="submit">
             Log Out
@@ -68,12 +98,37 @@ export default async function AdminDashboardPage() {
       </div>
 
       <section className="panel" style={{ marginBottom: "1rem" }}>
-        <h2>Cars (Add / Edit / Remove)</h2>
-        <p className="muted">Submit with an existing Car ID to edit; leave Car ID empty to add.</p>
-        <form className="form-grid" action={createOrUpdateCarAction}>
+        <h2>Demand Snapshot</h2>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Vehicle</th>
+                <th>Tier</th>
+                <th>Total Requests</th>
+                <th>Pending Requests</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.id}>
+                  <td>{row.name}</td>
+                  <td>{row.tier}</td>
+                  <td>{row.total}</td>
+                  <td>{row.pending}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="panel" style={{ marginBottom: "1rem" }}>
+        <h2>Manage Vehicles</h2>
+        <form className="form-grid" action={createOrUpdateVehicleAction}>
           <div className="field-row">
             <label>
-              Car ID (edit only)
+              Vehicle ID (edit only)
               <input name="id" />
             </label>
             <label>
@@ -88,7 +143,7 @@ export default async function AdminDashboardPage() {
             </label>
             <label>
               Brand
-              <input name="brand" required />
+              <input name="brand" defaultValue="Rolls-Royce" required />
             </label>
           </div>
           <div className="field-row">
@@ -97,29 +152,37 @@ export default async function AdminDashboardPage() {
               <input name="model" required />
             </label>
             <label>
-              Year
-              <input name="year" type="number" min={2000} max={2100} required />
+              Tier
+              <select name="tier" required>
+                <option value="classic">classic</option>
+                <option value="modern">modern</option>
+                <option value="ultra">ultra</option>
+              </select>
             </label>
           </div>
           <div className="field-row">
             <label>
-              Daily Price (cents)
-              <input name="dailyPrice" type="number" min={10000} required />
+              Year
+              <input name="year" type="number" min={1950} max={2100} required />
             </label>
             <label>
-              Thumbnail URL
-              <input name="thumbnailUrl" type="url" required />
+              Price Per Day (cents)
+              <input name="pricePerDay" type="number" min={10000} required />
             </label>
           </div>
+          <label>
+            Main Image URL
+            <input name="imageUrl" type="url" required />
+          </label>
           <label>
             Description
             <textarea name="description" rows={3} required />
           </label>
           <label>
-            Gallery Image URLs (one per line)
-            <textarea name="imageUrls" rows={4} required />
+            Gallery URLs (one per line)
+            <textarea name="imageUrls" rows={3} />
           </label>
-          <button type="submit">Save Car</button>
+          <button type="submit">Save Vehicle</button>
         </form>
 
         <div className="table-wrap">
@@ -127,29 +190,24 @@ export default async function AdminDashboardPage() {
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Car</th>
+                <th>Vehicle</th>
                 <th>Price</th>
-                <th>Booking Page</th>
+                <th>Status</th>
                 <th />
               </tr>
             </thead>
             <tbody>
-              {cars.map((car) => (
-                <tr key={car.id}>
-                  <td>{car.id}</td>
+              {vehicles.map((vehicle) => (
+                <tr key={vehicle.id}>
+                  <td>{vehicle.id}</td>
+                  <td>{vehicle.name}</td>
+                  <td>{formatCurrency(vehicle.price_per_day)}</td>
+                  <td>{vehicle.is_active ? "Active" : "Inactive"}</td>
                   <td>
-                    {car.name}
-                    <div className="muted">{car.slug}</div>
-                  </td>
-                  <td>{formatCurrency(car.dailyPrice)}</td>
-                  <td>
-                    <Link href={`/cars/${car.slug}`}>Open</Link>
-                  </td>
-                  <td>
-                    <form action={removeCarAction}>
-                      <input type="hidden" name="id" value={car.id} />
+                    <form action={removeVehicleAction}>
+                      <input type="hidden" name="id" value={vehicle.id} />
                       <button className="btn-secondary" type="submit">
-                        Remove
+                        Deactivate
                       </button>
                     </form>
                   </td>
@@ -161,68 +219,49 @@ export default async function AdminDashboardPage() {
       </section>
 
       <section className="panel" style={{ marginBottom: "1rem" }}>
-        <h2>Bookings</h2>
+        <h2>Booking Requests</h2>
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
                 <th>Created</th>
-                <th>Car</th>
+                <th>Vehicle</th>
                 <th>Customer</th>
                 <th>Dates</th>
                 <th>Status</th>
-                <th>Payment</th>
-                <th>Actions</th>
+                <th />
               </tr>
             </thead>
             <tbody>
               {bookings.map((booking) => (
                 <tr key={booking.id}>
-                  <td>{booking.createdAt.toLocaleString()}</td>
-                  <td>{booking.car.name}</td>
+                  <td>{new Date(booking.created_at).toLocaleString()}</td>
+                  <td>{booking.vehicles?.name || "—"}</td>
                   <td>
-                    {booking.firstName} {booking.lastName}
+                    {booking.customer_name}
                     <div className="muted">{booking.email}</div>
                   </td>
                   <td>
-                    {booking.startDate.toLocaleDateString()} -{" "}
-                    {booking.endDate.toLocaleDateString()}
+                    {new Date(booking.start_date).toLocaleDateString()} -{" "}
+                    {new Date(booking.end_date).toLocaleDateString()}
                   </td>
+                  <td>{booking.booking_status}</td>
                   <td>
-                    {booking.status}
-                    <div className="muted">{booking.paymentStatus}</div>
-                  </td>
-                  <td>
-                    {formatCurrency(booking.chargedAmountCents)}
-                    <div className="muted">{booking.paymentType}</div>
-                  </td>
-                  <td>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
-                      <form action={updateBookingStatusAction}>
+                    <div style={{ display: "flex", gap: "0.35rem" }}>
+                      <form action={updateBookingRequestStatusAction}>
                         <input type="hidden" name="id" value={booking.id} />
                         <input type="hidden" name="status" value="APPROVED" />
-                        <button type="submit" className="btn-secondary">
+                        <button className="btn-secondary" type="submit">
                           Approve
                         </button>
                       </form>
-                      <form action={updateBookingStatusAction}>
+                      <form action={updateBookingRequestStatusAction}>
                         <input type="hidden" name="id" value={booking.id} />
                         <input type="hidden" name="status" value="REJECTED" />
-                        <button type="submit" className="btn-secondary">
+                        <button className="btn-secondary" type="submit">
                           Reject
                         </button>
                       </form>
-                      <form action={markBookingPaidAction}>
-                        <input type="hidden" name="id" value={booking.id} />
-                        <button type="submit" className="btn-secondary">
-                          Mark Paid
-                        </button>
-                      </form>
-                    </div>
-                    <div style={{ marginTop: "0.3rem" }}>
-                      <Link href={booking.licenseUrl} target="_blank">
-                        View License
-                      </Link>
                     </div>
                   </td>
                 </tr>
@@ -233,59 +272,59 @@ export default async function AdminDashboardPage() {
       </section>
 
       <section className="panel">
-        <h2>Blocked Dates</h2>
+        <h2>Blocked Dates (Visual Disable)</h2>
         <form className="form-grid" action={createBlockedDateAction}>
           <div className="field-row">
             <label>
-              Car
-              <select name="carId" required>
-                {cars.map((car) => (
-                  <option key={car.id} value={car.id}>
-                    {car.name}
+              Vehicle
+              <select name="vehicleId" required>
+                {vehicles.map((vehicle) => (
+                  <option key={vehicle.id} value={vehicle.id}>
+                    {vehicle.name}
                   </option>
                 ))}
               </select>
             </label>
             <label>
               Reason
-              <input name="reason" placeholder="Maintenance, private use..." />
+              <input name="reason" placeholder="Maintenance, private charter..." />
             </label>
           </div>
           <div className="field-row">
             <label>
-              Start Date
-              <input type="date" name="startDate" required />
+              Blocked From
+              <input type="date" name="blockedFrom" required />
             </label>
             <label>
-              End Date
-              <input type="date" name="endDate" required />
+              Blocked To
+              <input type="date" name="blockedTo" required />
             </label>
           </div>
-          <button type="submit">Block Dates</button>
+          <button type="submit">Add Blocked Dates</button>
         </form>
 
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Car</th>
-                <th>Dates</th>
+                <th>Vehicle</th>
+                <th>Date Range</th>
                 <th>Reason</th>
                 <th />
               </tr>
             </thead>
             <tbody>
-              {blockedDates.map((blockedDate) => (
-                <tr key={blockedDate.id}>
-                  <td>{blockedDate.car.name}</td>
+              {blockedDates.map((entry) => (
+                <tr key={entry.id}>
+                  <td>{entry.vehicles?.name || "—"}</td>
                   <td>
-                    {blockedDate.startDate.toLocaleDateString()} -{" "}
-                    {blockedDate.endDate.toLocaleDateString()}
+                    {new Date(entry.blocked_from).toLocaleDateString()} -{" "}
+                    {new Date(entry.blocked_to).toLocaleDateString()}
                   </td>
-                  <td>{blockedDate.reason || "—"}</td>
+                  <td>{entry.reason || "—"}</td>
                   <td>
                     <form action={removeBlockedDateAction}>
-                      <input type="hidden" name="id" value={blockedDate.id} />
+                      <input type="hidden" name="id" value={entry.id} />
                       <button className="btn-secondary" type="submit">
                         Remove
                       </button>

@@ -4,9 +4,9 @@ import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Blackline Exotics | Luxury Supercar Rentals",
+  title: "Aurelius Executive | Ultra Luxury Executive Rental",
   description:
-    "Rent elite supercars with instant availability checks, secure booking, and premium concierge support.",
+    "Ultra luxury executive Rolls-Royce rental with demand testing across classic, modern, and ultra premium tiers.",
 };
 
 export default function RootLayout({
@@ -20,7 +20,7 @@ export default function RootLayout({
         <header className="site-header">
           <div className="container site-header__inner">
             <Link href="/" className="brand">
-              BLACKLINE EXOTICS
+              AURELIUS EXECUTIVE
             </Link>
             <nav className="nav-links" aria-label="Main navigation">
               <Link href="/">Fleet</Link>

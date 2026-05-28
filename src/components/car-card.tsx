@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { getTierMeta } from "@/lib/tier";
 import { formatCurrency } from "@/lib/utils";
 
 type CarCardProps = {
   car: {
+    id: string;
     slug: string;
     name: string;
     brand: string;
@@ -16,6 +18,8 @@ type CarCardProps = {
 };
 
 export function CarCard({ car }: CarCardProps) {
+  const tier = getTierMeta(car);
+
   return (
     <article className="card">
       <Image
@@ -26,13 +30,17 @@ export function CarCard({ car }: CarCardProps) {
         className="car-image"
       />
       <div className="card-content">
+        <p className={`tier-badge tier-${tier.key}`}>{tier.label}</p>
         <h2 className="card-title">{car.name}</h2>
         <p className="card-subtitle">
           {car.year} {car.brand}
         </p>
+        <p className="muted" style={{ marginTop: 0 }}>
+          {tier.summary}
+        </p>
         <div className="price-row">
           <strong>{formatCurrency(car.dailyPrice)} / day</strong>
-          <Link className="btn" href={`/cars/${car.slug}`}>
+          <Link className="btn" href={`/cars/${car.id}`}>
             View & Book
           </Link>
         </div>

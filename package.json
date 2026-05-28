@@ -1,7 +1,7 @@
 {
   "name": "super-car-rental",
   "version": "1.0.0",
-  "description": "Luxury supercar rental platform ready for Vercel deployment",
+  "description": "Ultra luxury executive rental platform with Rolls-Royce tier demand testing",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -18,12 +18,13 @@
     "nextjs",
     "stripe",
     "prisma",
-    "supercar-rental"
+    "executive-rental"
   ],
   "author": "Super Car Rental",
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "^6.19.0",
+    "@supabase/supabase-js": "^2.106.2",
     "@vercel/blob": "^2.4.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.3.0",

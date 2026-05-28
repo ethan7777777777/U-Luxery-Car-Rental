@@ -6,8 +6,8 @@ export default function BookingSuccessPage() {
       <section className="panel" style={{ maxWidth: 700, margin: "0 auto" }}>
         <h1>Booking Submitted Successfully</h1>
         <p className="muted">
-          Your payment was received and your booking request is saved. Our admin team has
-          been notified and will confirm details shortly.
+          Your executive rental request and payment are saved. Our concierge desk has
+          been notified and will confirm final itinerary details shortly.
         </p>
         <Link className="btn" href="/">
           Return to Fleet

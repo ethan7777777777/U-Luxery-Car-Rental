@@ -2,10 +2,10 @@ import { notFound } from "next/navigation";
 
 import { BookingForm } from "@/components/booking-form";
 import { CarGallery } from "@/components/car-gallery";
-import { hasDatabaseUrl } from "@/lib/config";
-import { fallbackCars } from "@/lib/fallback-cars";
+import { hasSupabaseConfig } from "@/lib/config";
+import { getSupabaseAdmin } from "@/lib/supabase";
+import { getTierMeta } from "@/lib/tier";
 import { formatCurrency } from "@/lib/utils";
-import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -16,30 +16,59 @@ type CarPageProps = {
 export default async function CarPage({ params }: CarPageProps) {
   const { slug } = await params;
 
-  const car = hasDatabaseUrl
-    ? await prisma.car.findUnique({
-        where: { slug },
-        include: {
-          images: {
-            orderBy: { sortOrder: "asc" },
-          },
-          blockedDates: {
-            orderBy: { startDate: "asc" },
-          },
-        },
-      })
-    : (() => {
-        const fallback = fallbackCars.find((item) => item.slug === slug);
-        if (!fallback) return null;
-        return {
-          ...fallback,
-          blockedDates: [],
-        };
-      })();
+  if (!hasSupabaseConfig) {
+    notFound();
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data: vehicleById } = await supabase
+    .from("vehicles")
+    .select("*")
+    .eq("id", slug)
+    .maybeSingle();
+
+  const { data: vehicleBySlug } = vehicleById
+    ? { data: null }
+    : await supabase.from("vehicles").select("*").eq("slug", slug).maybeSingle();
+
+  const vehicle = vehicleById || vehicleBySlug;
+  if (!vehicle) notFound();
+
+  const { data: blockedDates } = await supabase
+    .from("blocked_dates")
+    .select("*")
+    .eq("vehicle_id", vehicle.id)
+    .order("blocked_from", { ascending: true });
+
+  const car = {
+    id: vehicle.id,
+    slug: vehicle.slug,
+    name: vehicle.name,
+    brand: vehicle.brand,
+    model: vehicle.model,
+    year: vehicle.year,
+    dailyPrice: vehicle.price_per_day,
+    description: vehicle.description,
+    images: (vehicle.gallery_urls && vehicle.gallery_urls.length > 0
+      ? vehicle.gallery_urls
+      : [vehicle.image_url || ""])
+      .filter(Boolean)
+      .map((url, index) => ({
+        id: `${vehicle.id}-${index}`,
+        url,
+      })),
+    blockedDates: (blockedDates || []).map((entry) => ({
+      id: entry.id,
+      startDate: new Date(entry.blocked_from),
+      endDate: new Date(entry.blocked_to),
+      reason: entry.reason,
+    })),
+  };
 
   if (!car) {
     notFound();
   }
+  const tier = getTierMeta(car);
 
   return (
     <div className="container" style={{ padding: "1.2rem 0 2rem" }}>
@@ -47,20 +76,17 @@ export default async function CarPage({ params }: CarPageProps) {
       <p className="muted" style={{ marginTop: 0 }}>
         {car.year} {car.brand} {car.model} • {formatCurrency(car.dailyPrice)} / day
       </p>
+      <p className={`tier-badge tier-${tier.key}`} style={{ width: "fit-content" }}>
+        {tier.label}
+      </p>
 
       <div className="grid-two">
         <div className="form-grid">
           <CarGallery name={car.name} images={car.images} />
-          {!hasDatabaseUrl && (
-            <section className="panel">
-              <div className="status error">
-                Booking is disabled until `DATABASE_URL` is configured in Vercel.
-              </div>
-            </section>
-          )}
           <section className="panel">
             <h2>Description</h2>
             <p className="muted">{car.description}</p>
+            <p className="muted">{tier.summary}</p>
           </section>
           <section className="panel">
             <h2>Unavailable Dates</h2>
@@ -86,7 +112,11 @@ export default async function CarPage({ params }: CarPageProps) {
             name: car.name,
             dailyPrice: car.dailyPrice,
           }}
-          bookingEnabled={hasDatabaseUrl}
+          blockedDates={car.blockedDates.map((blockedDate) => ({
+            startDate: blockedDate.startDate.toISOString(),
+            endDate: blockedDate.endDate.toISOString(),
+            reason: blockedDate.reason,
+          }))}
         />
       </div>
     </div>
