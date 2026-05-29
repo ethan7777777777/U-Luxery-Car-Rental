@@ -112,6 +112,54 @@ type Database = {
         }>;
         Relationships: [];
       };
+      privacy_requests: {
+        Row: {
+          id: string;
+          request_type:
+            | "know"
+            | "delete"
+            | "correct"
+            | "opt_out_sale"
+            | "limit_sensitive_use";
+          full_name: string;
+          email: string;
+          phone: string | null;
+          details: string | null;
+          status: "open" | "in_review" | "completed" | "rejected";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          request_type:
+            | "know"
+            | "delete"
+            | "correct"
+            | "opt_out_sale"
+            | "limit_sensitive_use";
+          full_name: string;
+          email: string;
+          phone?: string | null;
+          details?: string | null;
+          status?: "open" | "in_review" | "completed" | "rejected";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<{
+          request_type:
+            | "know"
+            | "delete"
+            | "correct"
+            | "opt_out_sale"
+            | "limit_sensitive_use";
+          full_name: string;
+          email: string;
+          phone: string | null;
+          details: string | null;
+          status: "open" | "in_review" | "completed" | "rejected";
+          updated_at: string;
+        }>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

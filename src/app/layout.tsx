@@ -29,6 +29,17 @@ export default function RootLayout({
           </div>
         </header>
         <main>{children}</main>
+        <footer className="site-footer">
+          <div className="container site-footer__inner">
+            <span className="muted">© {new Date().getFullYear()} Aurelius Executive</span>
+            <nav className="nav-links" aria-label="Legal navigation">
+              <Link href="/privacy-policy">Privacy Policy</Link>
+              <Link href="/do-not-sell">Do Not Sell or Share</Link>
+              <Link href="/privacy-request">Privacy Request</Link>
+              <Link href="/cookie-policy">Cookie Policy</Link>
+            </nav>
+          </div>
+        </footer>
       </body>
     </html>
   );

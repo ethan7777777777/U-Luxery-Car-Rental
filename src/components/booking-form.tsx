@@ -176,6 +176,12 @@ export function BookingForm({ car, blockedDates }: BookingFormProps) {
           />
         </label>
 
+        <p className="muted" style={{ marginTop: 0 }}>
+          By submitting, you agree to our data collection for booking request handling.
+          California residents can manage privacy rights via the{" "}
+          <a href="/privacy-request">Privacy Request</a> page.
+        </p>
+
         {error && <div className="status error">{error}</div>}
         {success && <div className="status ok">{success}</div>}
 

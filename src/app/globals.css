@@ -70,6 +70,20 @@ a {
   color: var(--muted);
 }
 
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: #090909;
+}
+
+.site-footer__inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 68px;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .hero {
   padding: 3rem 0 2rem;
 }
@@ -314,5 +328,6 @@ td {
   .nav-links {
     gap: 0.5rem;
     font-size: 0.9rem;
+    flex-wrap: wrap;
   }
 }

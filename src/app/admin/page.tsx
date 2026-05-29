@@ -31,7 +31,12 @@ export default async function AdminDashboardPage() {
   }
 
   const supabase = getSupabaseAdmin();
-  const [{ data: vehiclesRaw }, { data: bookingsRaw }, { data: blockedDatesRaw }] =
+  const [
+    { data: vehiclesRaw },
+    { data: bookingsRaw },
+    { data: blockedDatesRaw },
+    { data: privacyRequestsRaw },
+  ] =
     await Promise.all([
     supabase.from("vehicles").select("*").order("price_per_day", { ascending: true }),
     supabase
@@ -42,6 +47,7 @@ export default async function AdminDashboardPage() {
       .from("blocked_dates")
       .select("*, vehicles(name)")
       .order("blocked_from", { ascending: true }),
+    supabase.from("privacy_requests").select("*").order("created_at", { ascending: false }),
     ]);
 
   const vehicles = (vehiclesRaw || []) as {
@@ -69,6 +75,15 @@ export default async function AdminDashboardPage() {
     blocked_to: string;
     reason: string | null;
     vehicles?: { name?: string } | null;
+  }[];
+  const privacyRequests = (privacyRequestsRaw || []) as {
+    id: string;
+    request_type: string;
+    full_name: string;
+    email: string;
+    phone: string | null;
+    status: string;
+    created_at: string;
   }[];
 
   const rows = (vehicles || []).map((vehicle) => {
@@ -330,6 +345,37 @@ export default async function AdminDashboardPage() {
                       </button>
                     </form>
                   </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="panel" style={{ marginTop: "1rem" }}>
+        <h2>Privacy Requests (CCPA)</h2>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Created</th>
+                <th>Type</th>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {privacyRequests.map((request) => (
+                <tr key={request.id}>
+                  <td>{new Date(request.created_at).toLocaleString()}</td>
+                  <td>{request.request_type}</td>
+                  <td>{request.full_name}</td>
+                  <td>
+                    {request.email}
+                    <div className="muted">{request.phone || "—"}</div>
+                  </td>
+                  <td>{request.status}</td>
                 </tr>
               ))}
             </tbody>

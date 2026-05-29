@@ -29,14 +29,14 @@ export default async function HomePage() {
   return (
     <div className="container">
       <section className="hero">
-        <h1>Ultra Luxury Executive Rental</h1>
+        <h1>Private Rolls-Royce Experiences</h1>
         <p>
-          Test market demand across three Rolls-Royce pricing tiers: classic luxury,
-          modern luxury, and ultra premium luxury.
+          Reserve exclusive luxury transportation tailored for executive travel,
+          special occasions, and premium client experiences.
         </p>
         <p className="muted">
-          Built for demand validation: compare bookings by tier, adjust pricing in
-          admin, and optimize your fleet strategy with real customer behavior.
+          Join our early access client list to preview availability, request preferred
+          models, and help shape our upcoming luxury fleet.
         </p>
         {!hasSupabaseConfig && (
           <p className="status error">
